@@ -1,0 +1,106 @@
+---
+title: "Preprocessing"
+author: "livio e livio"
+date: "20/04/2022"
+output:
+  html_document: default
+  pdf_document: 
+  toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+eval_raw=FALSE
+
+# library(r41sqrt10)
+source('utils.R')
+source("functions.R")
+```
+
+# Import + preprocessing
+
+```{r}
+if(eval_raw){
+  D1=import_data_add_group("13102021_ID429_Zm_P14_Plate1_SingleData.xlsx")
+  D2=import_data_add_group("13102021_ID429_Zm_P17_Plate2_SingleData.xlsx")
+  D3=import_data_add_group("13102021_ID429_Zm_P16_Plate3_SingleData.xlsx")
+  D4=import_data_add_group("13102021_ID429_Zm_P20_Plate4_SingleData.xlsx")
+  
+  D=rbind(D1,D2,D3,D4)
+  # rm(D1,D,D3,D4)
+    D=D[D$Group!=levels(D$Group)[1],] 
+  D=D[D$Compound!="DMEM",] #"0:None"
+  
+  D$Group=factor(D$Group)
+  D$Compound=factor(D$Compound)
+  D$Compound=relevel(D$Compound,"Control")
+  # contrasts(D$Compound)
+  
+  D$Plate=factor(D$Plate)
+  D$Concentration=factor(D$Concentration)
+  
+# D$Condition=factor(D$Condition)
+  
+D$Column=factor(D$Column)
+D$Row=factor(D$Row)
+
+contrasts(D$Plate)=contr.sum(4)
+contrasts(D$Column)=contr.sum(nlevels(D$Column))
+contrasts(D$Row)=contr.sum(nlevels(D$Row))
+
+
+  save(D, file= "datiD.Rdata")
+  } else   load("datiD.Rdata")
+```
+```{r}
+
+# plot_row_data("13102021_ID429_Zm_P14_Plate1_SingleData.Rdata")
+# plot_row_data("13102021_ID429_Zm_P17_Plate2_SingleData.Rdata")
+# plot_row_data("13102021_ID429_Zm_P16_Plate3_SingleData.Rdata")
+# plot_row_data("13102021_ID429_Zm_P20_Plate4_SingleData.Rdata")
+```
+
+```{r, eval=TRUE}
+load("13102021_ID429_Zm_P14_Plate1_SingleData.Rdata")
+D=dati
+D$Plate=1
+load("13102021_ID429_Zm_P17_Plate2_SingleData.Rdata")
+dati$Plate=2
+D=rbind(D,dati)
+load("13102021_ID429_Zm_P16_Plate3_SingleData.Rdata")
+dati$Plate=3
+D=rbind(D,dati)
+load("13102021_ID429_Zm_P20_Plate4_SingleData.Rdata")
+dati$Plate=4
+D=rbind(D,dati)
+
+D=add_groups(D)
+(tab=table(D$Group,D$Plate))
+prop.table(tab,margin = 2)
+
+summary(D$Nuclei_length)
+summary(D$Nuclei_intensity)
+summary(D$Nuclei_Ratio_W_L)
+
+```
+
+```{r, eval=TRUE}
+D$Group0=D$Group3
+table(D[D$Compound=="Control","Group3"])
+
+my_plot1(D[D$Compound=="Control",])
+
+D$Group0=D$Group
+table(D[D$Compound=="Control","Group"])
+my_plot1(D[D$Compound=="Control",])
+
+table(D$Group,D$Group3)
+D$Group0=(D$Group=="0:None")
+D$Group0=factor(D$Group0)
+levels(D$Group0)=c("Grp 1-6","NO Grp")
+
+my_plot1(D)
+my_plot2(D)
+
+```
+
