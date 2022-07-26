@@ -1,14 +1,3 @@
-############
-my_plot_results <- function(mod){
-  p=plot_model(mod, type = "eff", terms = c("Cond","Grp"))
-  p=p+coord_flip()+scale_y_continuous(trans='log10')
-  temp=get_model_data(mod, type = "eff", terms = c("Cond","Grp"))
-  temp=data.frame(temp)
-  temp=temp[temp$x==1,"predicted"]
-  p=p + geom_hline(yintercept=temp,col="gray")
-  p
-}
-
 my_plot1 <- function(dati){
   library(ggplot2)
   p1 <- ggplot(dati, aes(x=Nuclei_length, y=Nuclei_intensity,col=Group0)) + geom_point(size=.01) + guides(color = guide_legend(override.aes = list(size=1)))
@@ -45,31 +34,27 @@ plot_row_data <- function(filename){
   
 }
 
-save_sampled_raw_data=function(dati,filename){
-  dati=dati[sample(nrow(dati),nrow(dati)/50),]
-  save(dati,file=gsub("xlsx","Rdata",filename))
-  NULL
-}
 
 library(sjPlot)
 library(ggplot2)
 theme_set(theme_sjplot())
 
-import_data_add_group <- function(filename,tab_txt){
-  print(paste0("Importing file ",filename))
-  
+import_data_add_group <- function(filename){
   library(readxl)
   dati <- read_excel(filename)
-  print(("and preprocessing it."))
+  print(dim(dati))
   
-  # print(dim(dati))
+  dati_reduce=function(dati,filename){
+    dati=dati[sample(nrow(dati),nrow(dati)/20),]
+    save(dati,file=gsub("xlsx","Rdata",filename))
+    NULL
+  }
+  dati_reduce(dati,filename)
   
-
-  dati <- add_groups(dati,tab_txt)
+  dati <- add_groups(dati)
   # dati=dati[,-grep("Nuclei",names(dati))]
-  save_sampled_raw_data(dati,filename)
   
-  D=aggregate(Nuclei_length ~ Group+Plate+Concentration+Compound+Row+Column, dati,  FUN=length)
+  D=aggregate(Nuclei_length ~ Group3+Group+Plate+Concentration+Compound+Row+Column, dati,  FUN=length)
   D$Counts=D$Nuclei_length
   D$Nuclei_length<- NULL
   D
@@ -77,46 +62,44 @@ import_data_add_group <- function(filename,tab_txt){
 
 ######## CREAZIONE GRUPPI: 
 
-add_groups <- function(dati,tab_txt){
+add_groups <- function(dati){
 
-  tab=read.csv(text=tab_txt)
+  dati$Group=
+    1*in_range(dati$Nuclei_length,lims = c(14,30))*
+    in_range(dati$Nuclei_intensity,lims = c(400,1500))*
+    in_range(dati$Nuclei_Ratio_W_L,lims = c(.2,.9))+
+    2*in_range(dati$Nuclei_length,lims = c(14,30))*
+    in_range(dati$Nuclei_intensity,lims = c(1500,2500))*
+    in_range(dati$Nuclei_Ratio_W_L,lims = c(.2,.9))+
+    3*in_range(dati$Nuclei_length,lims = c(14,30))*
+    in_range(dati$Nuclei_intensity,lims = c(2500,12000))*
+    in_range(dati$Nuclei_Ratio_W_L,lims = c(.2,.9))+
+    4*in_range(dati$Nuclei_length,lims = c(6,14))*
+    in_range(dati$Nuclei_intensity,lims = c(2100,12000))*
+    in_range(dati$Nuclei_Ratio_W_L,lims = c(.2,.9))+
+    5*in_range(dati$Nuclei_length,lims = c(30,Inf))*
+    in_range(dati$Nuclei_intensity,lims = c(400,6000))*
+    in_range(dati$Nuclei_Ratio_W_L,lims = c(.2,.9))+
+    6*in_range(dati$Nuclei_length,lims = c(-Inf,6))*
+    in_range(dati$Nuclei_intensity,lims = c(400,12000))*
+    in_range(dati$Nuclei_Ratio_W_L,lims = c(.2,.9))+
+    7*in_range(dati$Nuclei_length,lims = c(6,14))*
+    in_range(dati$Nuclei_intensity,lims = c(400,2100))*
+    in_range(dati$Nuclei_Ratio_W_L,lims = c(.2,.9))
   
-#nomi=names(tab)[-(1:2)]
-
-
-res=apply(tab,1,function(x){#browser()
-  res_grp=lapply(3:5, function(i_col){
-    xx=as.numeric(strsplit(x[i_col]," - ")[[1]])
-    in_range(dati[,names(x)[i_col]],lims = xx)
-    } 
-    )
-  temp=apply(as.data.frame(res_grp),1,prod)
-})
-
-temp=rowSums(res)
-if(any(temp>1)) warning(paste0("There are ",sum(temp>1)," cells belonging to more than one group. Please check the definition of groups!! (now I set them no groups)"))
-res[temp>1,]=0
-
-dati$Group=(res%*%(as.numeric(tab$ID)))[,1]
-tab$Group=gsub(" ","",tab$Group)
-dati$Group=factor(dati$Group)
-
-#rownames(tab)=tab$ID
-for (l in tab$ID) levels(dati$Group)[levels(dati$Group)==l]=tab[l,"Group"]
-
-levels(dati$Group)[levels(dati$Group)=="0"]="0:None"
-
-  #   
-  # dati$Group3=dati$Group
-  # levels(dati$Group3)[6]="Large"
-  # levels(dati$Group3)[7]="Small"
-  # levels(dati$Group3)[2:5]="Normal"
-  # 
-  # print(table(dati$Group3))
-  # 
+  dati$Group=factor(dati$Group)
+  levels(dati$Group)=c("0:None","1:G0","2:S","3:G2+M_early","4:M",
+                       "5:Large", "6:Small","6:Small")
+  dati$Group3=dati$Group
+  levels(dati$Group3)[6]="Large"
+  levels(dati$Group3)[7]="Small"
+  levels(dati$Group3)[2:5]="Normal"
+  
+  print(table(dati$Group3))
+  
   print(table(dati$Group))
   
-#  print(table(dati$Group))  
+  print(table(dati$Group))  
   # cat("
   #     qualcosa non va nel 9 gruppi?
   #     ")
