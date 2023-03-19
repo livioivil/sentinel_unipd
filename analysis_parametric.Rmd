@@ -1,130 +1,130 @@
----
-title: "Analisi"
-author: "livio e livio"
-params:
-#  keep: 'names(D)[grep("Nuclei_",names(D))]'
-#  population: "Condition_"
-  file_data: "datiD.Rdata"
-  eval: "TRUE"
-output:
-  html_document: 
-    toc: yes
-  pdf_document: 
-    toc: yes
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE,warning = FALSE)
-load(params$file_data)
-eval=eval(parse(text=params$eval))
-source("functions.R")
-library(ggplot2)
-library(data.table)
-library(sjPlot)
-library(ggplot2)
-theme_set(theme_sjplot())
-
-# devtools::install_github("ricardo-bion/ggradar", 
-                          # dependencies = TRUE)
-# library(ggradar)
-# colori=c("red","blue","cyan","grey","orange",
-#          "green","black","yellow","violet",
-#          "darkred", "darkblue","darkgrey","darkgreen",
-#          "darkorange")
-# 
-# shapes=c(1,15,17,19,18,21:50)
-
-suppressPackageStartupMessages(library(dplyr))
-
-#D=data.table(D)
-
-```
-
-# Inferential Analysis
-
-
-```{r}
-# library(lmerTest)
-require("MASS")
-require(multcomp)
-
-D=data.frame(D)
-
-D$Condition=apply(cbind(as.character(D$Compound),
-                        as.character(D$Concentration)),
-                  1,function(x) paste(x,collapse = ":"))
-D$Cond=factor(D$Condition)
-D$Cond=factor(D$Cond)
-D$Compound=factor(D$Compound)
-
-D$Grp=D$Group
-D$Cond=relevel(D$Cond,"Control:0")
-D$Cond=factor(D$Cond)
-
-contrasts(D$Plate)<- contr.sum(4)
-# table(D$Cond,D$Group,D$Plate)
-
-if(eval){
-  ### FIXED EFFECT
-  mod= glm.nb(Counts~Plate+Cond*Grp,data=D)
-  
-   # mod=glmer.nb(Counts~Condition*Group3+(1|Column),data=D[D$Plate==1,])
-  ngrps=nlevels(D$Grp)
-  nconds=23#*ngrps
-  base=cbind(matrix(0,nconds,4),diag(nconds))
-  temp=rbind(
-    cbind(base,matrix(0,nconds,ngrps-1+nconds*5)), #gr=1
-    cbind(base,matrix(0,nconds,ngrps-1),diag(nconds),matrix(0,nconds,nconds*4)), #gr=2
-    cbind(base,matrix(0,nconds,ngrps-1+nconds),diag(nconds),matrix(0,nconds,nconds*3)),#gr=3
-    cbind(base,matrix(0,nconds,ngrps-1+nconds*2),diag(nconds),matrix(0,nconds,nconds*2)),#gr=4
-    cbind(base,matrix(0,nconds,ngrps-1+nconds*3),diag(nconds),matrix(0,nconds,nconds*1)),#gr=5
-    cbind(base,matrix(0,nconds,ngrps-1+nconds*4),diag(nconds),matrix(0,nconds,nconds*0)))#,
-    # cbind(matrix(0,nconds,ngrps+nconds*6),diag(nconds),matrix(0,nconds,nconds*0)))#gr=6
-  
-  contr_mat=temp
-  rownames(contr_mat)=
-    names(coef(mod))[-c(1:4,28:32)]
-  rownames(contr_mat)[1:23]=paste0(rownames(contr_mat)[1:23],":Grp1:G0")  
-  
-  
-  modc=glht(mod,contr_mat)
-  modc_mcp=summary(modc)
-  
-  M=rbind(
-    c(1,1,1,rep(0,20)),
-    c(rep(0,3),rep(1,5),rep(0,15)),
-    c(rep(0,8),rep(1,5),rep(0,10)),
-    c(rep(0,13),rep(1,5),rep(0,5)),
-    c(rep(0,18),rep(1,5))
-  )
-
-  
-  riducente=  kronecker(diag(1, 6), M)
-    
-  contr_mat0=riducente%*%contr_mat
-  rownames(contr_mat0)=paste(sep="_",rep(levels(D$Compound)[-1],6),rep(levels(D$Group),each=5))
-  modc0=glht(mod,contr_mat0)
-  modc0_mcp=summary(modc0)
-  
-  save(mod,file="modelNbinom_fixed.Rdata",
-         modc,
-         modc_mcp,
-         modc0,
-         modc0_mcp)
-} else load(file="modelNbinom_fixed.Rdata")
-
-
-summary(modc0,adjusted(type="none"))
-print("POST HOC correction")
-modc0_mcp
-
-##############
-
-# car::Anova(mod)
-summary(modc,adjusted(type="none"))
-print("POST HOC correction")
-modc_mcp
-
-
-p=my_plot_results(mod)
+--- 
+title: "Analisi" 
+author: "livio e livio" 
+params: 
+#  keep: 'names(D)[grep("Nuclei_",names(D))]' 
+#  population: "Condition_" 
+  file_data: "datiD.Rdata" 
+  eval: "TRUE" 
+output: 
+  html_document:  
+    toc: yes 
+  pdf_document:  
+    toc: yes 
+--- 
+ 
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE) 
+load(params$file_data) 
+eval=eval(parse(text=params$eval)) 
+source("functions.R") 
+library(ggplot2) 
+library(data.table) 
+library(sjPlot) 
+library(ggplot2) 
+theme_set(theme_sjplot()) 
+ 
+# devtools::install_github("ricardo-bion/ggradar",  
+                          # dependencies = TRUE) 
+# library(ggradar) 
+# colori=c("red","blue","cyan","grey","orange", 
+#          "green","black","yellow","violet", 
+#          "darkred", "darkblue","darkgrey","darkgreen", 
+#          "darkorange") 
+#  
+# shapes=c(1,15,17,19,18,21:50) 
+ 
+suppressPackageStartupMessages(library(dplyr)) 
+ 
+#D=data.table(D) 
+ 
+``` 
+ 
+# Inferential Analysis 
+ 
+ 
+```{r} 
+# library(lmerTest) 
+require("MASS") 
+require(multcomp) 
+ 
+D=data.frame(D) 
+ 
+D$Condition=apply(cbind(as.character(D$Compound), 
+                        as.character(D$Concentration)), 
+                  1,function(x) paste(x,collapse = ":")) 
+D$Cond=factor(D$Condition) 
+D$Cond=factor(D$Cond) 
+D$Compound=factor(D$Compound) 
+ 
+D$Grp=D$Group 
+D$Cond=relevel(D$Cond,"Control:0") 
+D$Cond=factor(D$Cond) 
+ 
+contrasts(D$Plate)<- contr.sum(4) 
+# table(D$Cond,D$Group,D$Plate) 
+ 
+if(eval){ 
+  ### FIXED EFFECT 
+  mod= glm.nb(Counts~Plate+Cond*Grp,data=D) 
+   
+   # mod=glmer.nb(Counts~Condition*Group3+(1|Column),data=D[D$Plate==1,]) 
+  ngrps=nlevels(D$Grp) 
+  nconds=23#*ngrps 
+  base=cbind(matrix(0,nconds,4),diag(nconds)) 
+  temp=rbind( 
+    cbind(base,matrix(0,nconds,ngrps-1+nconds*5)), #gr=1 
+    cbind(base,matrix(0,nconds,ngrps-1),diag(nconds),matrix(0,nconds,nconds*4)), #gr=2 
+    cbind(base,matrix(0,nconds,ngrps-1+nconds),diag(nconds),matrix(0,nconds,nconds*3)),#gr=3 
+    cbind(base,matrix(0,nconds,ngrps-1+nconds*2),diag(nconds),matrix(0,nconds,nconds*2)),#gr=4 
+    cbind(base,matrix(0,nconds,ngrps-1+nconds*3),diag(nconds),matrix(0,nconds,nconds*1)),#gr=5 
+    cbind(base,matrix(0,nconds,ngrps-1+nconds*4),diag(nconds),matrix(0,nconds,nconds*0)))#, 
+    # cbind(matrix(0,nconds,ngrps+nconds*6),diag(nconds),matrix(0,nconds,nconds*0)))#gr=6 
+   
+  contr_mat=temp 
+  rownames(contr_mat)= 
+    names(coef(mod))[-c(1:4,28:32)] 
+  rownames(contr_mat)[1:23]=paste0(rownames(contr_mat)[1:23],":Grp1:G0")   
+   
+   
+  modc=glht(mod,contr_mat) 
+  modc_mcp=summary(modc) 
+   
+  M=rbind( 
+    c(1,1,1,rep(0,20)), 
+    c(rep(0,3),rep(1,5),rep(0,15)), 
+    c(rep(0,8),rep(1,5),rep(0,10)), 
+    c(rep(0,13),rep(1,5),rep(0,5)), 
+    c(rep(0,18),rep(1,5)) 
+  ) 
+ 
+   
+  riducente=  kronecker(diag(1, 6), M) 
+     
+  contr_mat0=riducente%*%contr_mat 
+  rownames(contr_mat0)=paste(sep="_",rep(levels(D$Compound)[-1],6),rep(levels(D$Group),each=5)) 
+  modc0=glht(mod,contr_mat0) 
+  modc0_mcp=summary(modc0) 
+   
+  save(mod,file="modelNbinom_fixed.Rdata", 
+         modc, 
+         modc_mcp, 
+         modc0, 
+         modc0_mcp) 
+} else load(file="modelNbinom_fixed.Rdata") 
+ 
+ 
+summary(modc0,adjusted(type="none")) 
+print("POST HOC correction") 
+modc0_mcp 
+ 
+############## 
+ 
+# car::Anova(mod) 
+summary(modc,adjusted(type="none")) 
+print("POST HOC correction") 
+modc_mcp 
+ 
+ 
+p=my_plot_results(mod) 
 p#+ggtitle("All 4 plates")
