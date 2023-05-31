@@ -1,21 +1,35 @@
 # Script Main di esempio, richiamo della funzione macro Prof. Finos
 
-PathScript <- 'C:\\Users\\USER\\Downloads\\App_Data\\ScriptR\\' 
-PathAnalisi <- '' 
-Gruppo1 <- 400-1500
-Gruppo2 <- 1500-2500
-Gruppo3 <- 2500-12000
-Gruppo4 <- 2100-12000
-Gruppo5 <- 400-6000
-Gruppo6 <- 400-12000
-Gruppo7 <- 400-2100
+PathScript <- '.' 
+PathAnalisi <- '.' 
+PathData <- 'G:\\My Drive\\lavorincorso\\brain_perm\\pfas_bos_taurus/data/' 
+
+# gli estremi degli intervalli sempre separati di " - " (occhio agli spazi prima e dopo il -)
+# usare Inf e -Inf (senza spazio il - prima di Inf); 
+#    per esempio: >32 deve essere indicato come "32 - Inf" e 
+#                 <14 come "-Inf - 14"                
+tab_txt= "ID,Group      , Nuclei - Nucleus Length [µm],Nuclei - Intensity Nucleus HOECHST 33342 Mean,Nuclei - Nucleus Ratio Width to Length \n
+1, G0          , 9 - 27, 300 - 900, 0.2 - 0.9\n
+2, S           , 9 - 27, 900 - 1600, 0.2 - 0.9\n
+3, G2 + early M, 12 - 27, 1600 - 3000, 0.2 - 0.9\n
+4, M           , 8 - 12, 1600 - 3000, 0.2 - 0.9\n
+5, Large       , 27 - Inf , 300 - 3000, 0.2 - 0.9\n
+6, Small       , -Inf - 8  , 300 - 3000, 0.2 - 0.9\n
+6, Small       , 8 - 9  , 300 - 1600, 0.2 - 0.9"
+
+
+
 
 InvokeR <- function()
 {
 	setwd(PathScript)
-	source('Utils.R');
 
-	rmarkdown::render("01_report_preprocessing.Rmd", output_file = "output.html")
+	rmarkdown::render("preprocessing_data.Rmd", 
+	                  params = list(PathData=PathData,tab_txt=tab_txt),
+	                  output_file = paste0(PathScript,"/Output_1.html"))
+	rmarkdown::render("analysis_parametric.Rmd", 
+	                  output_file = paste0(PathScript,"/Output_2.html"))
+	
 }
 
 InvokeR();

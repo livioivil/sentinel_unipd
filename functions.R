@@ -11,9 +11,18 @@ my_plot_results <- function(mod){
 
 my_plot1 <- function(dati){ 
   library(ggplot2) 
-  p1 <- ggplot(dati, aes(x=Nuclei_length, y=Nuclei_intensity,col=Group0)) + geom_point(size=.01) + guides(color = guide_legend(override.aes = list(size=1))) 
-  p2 <- ggplot(dati, aes(x=Nuclei_Ratio_W_L, y=Nuclei_intensity,col=Group0)) + geom_point(size=.01) + guides(color = guide_legend(override.aes = list(size=1))) 
-  p3 <- ggplot(dati, aes(y=Nuclei_Ratio_W_L, x=Nuclei_length,col=Group0)) + geom_point(size=.01) + guides(color = guide_legend(override.aes = list(size = 1))) 
+  qs=list(Nuclei_length=quantile(dati$Nuclei_length,.99,na.rm=TRUE)*1.01,
+       Nuclei_intensity=quantile(dati$Nuclei_intensity,.99,na.rm=TRUE)*1.01,
+       Nuclei_Ratio_W_L=quantile(dati$Nuclei_Ratio_W_L,.99,na.rm=TRUE)*1.01)
+  p1 <- ggplot(dati, aes(x=Nuclei_length, y=Nuclei_intensity,col=Group0)) + geom_point(size=1) + 
+    guides(color = guide_legend(override.aes = list(size=1))) + xlim(c(0,qs$Nuclei_length))+ ylim(c(0,qs$Nuclei_intensity))+
+    xlab("Nuclei Length")+ylab("Nuclei Intensity")
+  p2 <- ggplot(dati, aes(x=Nuclei_Ratio_W_L, y=Nuclei_intensity,col=Group0)) + geom_point(size=1) + 
+    guides(color = guide_legend(override.aes = list(size=1))) + xlim(c(0,qs$Nuclei_Ratio_W_L))+ ylim(c(0,qs$Nuclei_intensity)) +
+    xlab("Nuclei Ratio Width/Length")+ylab("Nuclei Intensity")
+  p3 <- ggplot(dati, aes(x=Nuclei_length, y=Nuclei_Ratio_W_L,col=Group0)) + geom_point(size=1) + 
+    guides(color = guide_legend(override.aes = list(size = 1))) + xlim(c(0,qs$Nuclei_length))+ ylim(c(0,qs$Nuclei_Ratio_W_L))+
+    xlab("Nuclei Length")+ylab("Nuclei Ratio Width/Length")
   # p4 <- ggplot(dati, aes(Nuclei_intensity)) + geom_histogram() 
   
   library(gridExtra) 

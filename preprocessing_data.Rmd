@@ -20,13 +20,15 @@ params:
 --- 
  
 ```{r setup, include=FALSE} 
-knitr::opts_chunk$set(echo = TRUE,warning = FALSE) 
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE) 
 # library(r41sqrt10) 
 source('utils.R') 
 source("functions.R") 
+library(knitr)
 ``` 
  
 # Import + preprocessing 
+ 
  
 ```{r Import_preprocessing} 
 #ls() 
@@ -79,14 +81,77 @@ for(i_fl in 1:length(filesRdata)){
   D=rbind(D,dati) 
 } 
  
-(tab=table(D$Group,D$Plate)) 
-prop.table(tab,margin = 2) 
- 
-summary(D$Nuclei_length) 
-summary(D$Nuclei_intensity) 
-summary(D$Nuclei_Ratio_W_L) 
  
 ``` 
+## Number of Cells by Compound and Plate
+
+```{r}
+kable(table(D$Compound,D$Plate,exclude = NULL) )
+
+```
+
+NOTE: missing values are removed (why do they exist??)
+
+```{r}
+D=D[!is.na(D$Compound),]
+```
+
+
+
+# Descriptives
+
+## Groups by samples
+
+```{r}
+tab=table(D$Group,D$Plate)
+kable(tab) 
+
+cat("NOTE: Category 0:None is omitted in the following")
+D=D[D$Group!="0:None",]
+D=D[!is.na(D$Group),]
+
+D$Group=factor(D$Group)
+tab=table(D$Group,D$Plate)
+
+tab=prop.table(tab,margin = 2)
+kable(tab,digits = 3) 
+
+d_tab=as.data.frame.table(tab)
+names(d_tab)=c("Group","Sample","Prop")
+
+g <- ggplot(d_tab, aes(y=Sample))
+g + geom_bar(aes(fill = Group,weight = Prop))+xlab("Proportion")
+
+```
+## Summary Features
+
+```{r}
+
+out=rbind(Nuclei_length=summary(D$Nuclei_length) ,
+      Nuclei_intensity=summary(D$Nuclei_intensity) ,
+      Nuclei_Ratio_W_L=summary(D$Nuclei_Ratio_W_L) 
+)
+out=cbind(out,c(sd(D$Nuclei_length) ,
+              sd(D$Nuclei_intensity) ,
+      sd(D$Nuclei_Ratio_W_L) )
+)
+
+kable(out)
+
+p <- ggplot(D, aes(group=Plate, y=Nuclei_length,fill=2)) + 
+  geom_boxplot()+ggtitle("Nuclei Length")
+p
+
+p <- ggplot(D, aes(group=Plate, y=Nuclei_intensity,fill=2)) + 
+  geom_boxplot()+ggtitle("Nuclei Intensity")
+p
+p <- ggplot(D, aes(group=Plate, y=Nuclei_Ratio_W_L,fill=2)) + 
+  geom_boxplot()+ggtitle("Nuclei Ratio Width/Length")
+p
+
+```
+
+
  
 ```{r, eval=TRUE} 
 # D$Group0=D$Group3 
@@ -95,14 +160,15 @@ summary(D$Nuclei_Ratio_W_L)
 # my_plot1(D[D$Compound=="Control",]) 
 #  
 D$Group0=D$Group 
-table(D[D$Compound=="Control","Group"]) 
+
+table(D[D$Compound=="Control","Group"],exclude = NULL) 
 my_plot1(D[D$Compound=="Control",]) 
  
-D$Group0=(D$Group=="0:None") 
-D$Group0=factor(D$Group0) 
-levels(D$Group0)=c("Grp 1-6","NO Grp") 
- 
-my_plot1(D) 
+# D$Group0=(D$Group=="0:None") 
+# D$Group0=factor(D$Group0) 
+# levels(D$Group0)=c("Grp 1-6","NO Grp") 
+#  
+# my_plot1(D) 
 #my_plot2(D) 
  
 ``` 
