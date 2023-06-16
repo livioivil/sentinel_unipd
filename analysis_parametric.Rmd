@@ -53,8 +53,7 @@ D=data.frame(D)
 D$Condition=apply(cbind(as.character(D$Compound), 
                         as.character(D$Concentration)), 
                   1,function(x) paste(x,collapse = ":")) 
-D$Cond=factor(D$Condition) 
-D$Cond=factor(D$Cond) 
+D$Cond=factor(D$Condition)
 D$Compound=factor(D$Compound) 
  
 D$Grp=D$Group 

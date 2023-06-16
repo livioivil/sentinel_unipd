@@ -1,7 +1,9 @@
+#cbPalette <- c("#999999", "#E69F00",, "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#009E73")
+cbPalette <- c("#F8766D","#B79F00","#00BA38","black","#619CFF","#F564E3")
 ############ 
 my_plot_results <- function(mod){ 
   p=plot_model(mod, type = "eff", terms = c("Cond","Grp")) 
-  p=p+coord_flip()+scale_y_continuous(trans='log10') 
+  p=p+coord_flip()+scale_y_continuous(trans='log10') +scale_colour_manual(values=cbPalette)
   temp=get_model_data(mod, type = "eff", terms = c("Cond","Grp")) 
   temp=data.frame(temp) 
   temp=temp[temp$x==1,"predicted"] 
@@ -16,13 +18,13 @@ my_plot1 <- function(dati){
        Nuclei_Ratio_W_L=quantile(dati$Nuclei_Ratio_W_L,.99,na.rm=TRUE)*1.01)
   p1 <- ggplot(dati, aes(x=Nuclei_length, y=Nuclei_intensity,col=Group0)) + geom_point(size=1) + 
     guides(color = guide_legend(override.aes = list(size=1))) + xlim(c(0,qs$Nuclei_length))+ ylim(c(0,qs$Nuclei_intensity))+
-    xlab("Nuclei Length")+ylab("Nuclei Intensity")
+    xlab("Nuclei Length")+ylab("Nuclei Intensity")+scale_colour_manual(values=cbPalette)
   p2 <- ggplot(dati, aes(x=Nuclei_Ratio_W_L, y=Nuclei_intensity,col=Group0)) + geom_point(size=1) + 
     guides(color = guide_legend(override.aes = list(size=1))) + xlim(c(0,qs$Nuclei_Ratio_W_L))+ ylim(c(0,qs$Nuclei_intensity)) +
-    xlab("Nuclei Ratio Width/Length")+ylab("Nuclei Intensity")
+    xlab("Nuclei Ratio Width/Length")+ylab("Nuclei Intensity")+scale_colour_manual(values=cbPalette)
   p3 <- ggplot(dati, aes(x=Nuclei_length, y=Nuclei_Ratio_W_L,col=Group0)) + geom_point(size=1) + 
     guides(color = guide_legend(override.aes = list(size = 1))) + xlim(c(0,qs$Nuclei_length))+ ylim(c(0,qs$Nuclei_Ratio_W_L))+
-    xlab("Nuclei Length")+ylab("Nuclei Ratio Width/Length")
+    xlab("Nuclei Length")+ylab("Nuclei Ratio Width/Length")+scale_colour_manual(values=cbPalette)
   # p4 <- ggplot(dati, aes(Nuclei_intensity)) + geom_histogram() 
   
   library(gridExtra) 
@@ -32,9 +34,9 @@ my_plot1 <- function(dati){
 
 my_plot2 <- function(dati){ 
   library(ggplot2) 
-  p1 <- ggplot(dati[dati$Group3=="Small",], aes(Nuclei_intensity)) + geom_histogram(bins=100)+ggtitle("Small") + xlim(c(0,7500)) 
-  p2 <- ggplot(dati[dati$Group3=="Normal",], aes(Nuclei_intensity)) + geom_histogram(bins=100)+ggtitle("Normal") + xlim(c(0,7500)) 
-  p3 <- ggplot(dati[dati$Group3=="Large",], aes(Nuclei_intensity)) + geom_histogram(bins=100)+ggtitle("Large") + xlim(c(0,7500)) 
+  p1 <- ggplot(dati[dati$Group3=="Small",], aes(Nuclei_intensity)) + geom_histogram(bins=100)+ggtitle("Small") + xlim(c(0,7500)) +scale_colour_manual(values=cbPalette)
+  p2 <- ggplot(dati[dati$Group3=="Normal",], aes(Nuclei_intensity)) + geom_histogram(bins=100)+ggtitle("Normal") + xlim(c(0,7500)) +scale_colour_manual(values=cbPalette)
+  p3 <- ggplot(dati[dati$Group3=="Large",], aes(Nuclei_intensity)) + geom_histogram(bins=100)+ggtitle("Large") + xlim(c(0,7500)) +scale_colour_manual(values=cbPalette)
   
   library(gridExtra) 
   grid.arrange(p1,p2,p3, nrow = 3) 
@@ -54,9 +56,49 @@ plot_row_data <- function(filename){
   
 } 
 
+
+###########
+explore_control_group_plate<- function(D){
+  
+  # library(data.table)
+  # DD <- data.table(dati[,c("Population","Shape","Layer_ID",par_i)])
+  DD <- D[D$Condition=="Control:0",c("Group","Cond","Plate","Counts"),]
+  DD$Plate=as.numeric(DD$Plate)
+
+  p=ggplot(data=DD) +   
+    aes(y=Plate, x=Counts, group = interaction(Plate,Group)) + 
+    ylab("Plate")+geom_point(aes(color =  Group, group=interaction(Plate,Group)),size=3)+
+    scale_x_continuous(trans='log10')+scale_colour_manual(values=cbPalette)
+print(p)
+}
+
+explore_control_group_plate_params<- function(D,par_i){
+  
+  # library(data.table)
+  # DD <- data.table(dati[,c("Population","Shape","Layer_ID",par_i)])
+  DD <- D[D$Cond=="Control:0",c("ID","Group","Row","Column","Cond","Plate",par_i)]
+  DD <- DD[DD$Group!="0:None",]
+  DD$Plate=as.factor(as.numeric(DD$Plate))
+  
+  # p=ggplot(data=DD) +   
+  #   aes(y=Plate, x=Nuclei_intensity, group = interaction(Plate,Group)) + 
+  #   ylab("Plate")+geom_point(aes(color =  Group, group=interaction(Plate,Group)),size=3)+
+  #   scale_x_continuous(trans='log10')+scale_colour_manual(values=cbPalette)
+  # print(p)
+  # 
+  p <- ggplot(DD, aes(group=interaction(Plate,ID), x=.data[[par_i]],
+                      y=interaction(ID,Plate),fill=Plate)) + 
+     theme(legend.position = "none")+geom_boxplot()+ggtitle(par_i)
+#    geom_point(aes(color =  Plate, group=interaction(Plate,ID)),size=3)
+  p
+  
+}
+
+########################### SAVE FUNCTIONS
 save_sampled_raw_data=function(dati,filename){ 
-  dati=dati[sample(nrow(dati),nrow(dati)/50),] 
   save(dati,file=gsub("xlsx","Rdata",filename)) 
+  dati=dati[sample(nrow(dati),nrow(dati)/50),] 
+  save(dati,file=gsub("\\.xlsx","_sampled.Rdata",filename))
   NULL 
 } 
 
@@ -147,3 +189,5 @@ add_groups <- function(dati,tab_txt){
   
   dati 
 } 
+
+

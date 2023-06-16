@@ -1,4 +1,10 @@
-# Script Main di esempio, richiamo della funzione macro Prof. Finos
+# adeguare nuova palette a tutti i grafici. ok?
+# grafico gruppi cells vs inquinanti. ok?
+# controllo tra piastre, controlli omogenei. explorazione visiva
+
+# in analisi_glm:
+# effetto togliere una piastra.
+# plot effetti separati per group (non molto leggibile ad ora).
 
 PathScript <- '.' 
 PathAnalisi <- '.' 
@@ -22,14 +28,14 @@ tab_txt= "ID,Group      , Nuclei - Nucleus Length [µm],Nuclei - Intensity Nucle
 
 InvokeR <- function()
 {
-	setwd(PathScript)
-
-	rmarkdown::render("preprocessing_data.Rmd", 
-	                  params = list(PathData=PathData,tab_txt=tab_txt),
-	                  output_file = paste0(PathScript,"/Output_1.html"))
-	rmarkdown::render("analysis_parametric.Rmd", 
-	                  output_file = paste0(PathScript,"/Output_2.html"))
-	
+  setwd(PathScript)
+  
+  rmarkdown::render("preprocessing_data.Rmd", 
+                    params = list(PathData=PathData,tab_txt=tab_txt),
+                    output_file = paste0(PathScript,"/Output_1.html"))
+  rmarkdown::render("analysis_parametric.Rmd", 
+                    output_file = paste0(PathScript,"/Output_2.html"))
+  
 }
 
 InvokeR();

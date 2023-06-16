@@ -16,7 +16,7 @@ params:
 6, Small       , -Inf - 8  , 300 - 3000, 0.2 - 0.9\n
 6, Small       , 8 - 9  , 300 - 1600, 0.2 - 0.9"
   PathData: 'G:\\My Drive\\lavorincorso\\brain_perm\\pfas_bos_taurus/data/' 
-  eval_raw: "TRUE" 
+  eval_raw: "FALSE" 
 --- 
  
 ```{r setup, include=FALSE} 
@@ -73,103 +73,193 @@ contrasts(D$Row)=contr.sum(nlevels(D$Row))
 ``` 
  
 ```{r, eval=TRUE} 
-D=c() 
+Dall=c() 
  
 for(i_fl in 1:length(filesRdata)){ 
   load(filesRdata[i_fl]) 
   dati$Plate=i_fl 
-  D=rbind(D,dati) 
+  Dall=rbind(Dall,dati) 
 } 
  
- 
+Dall$Condition=apply(cbind(as.character(Dall$Compound), 
+                        as.character(Dall$Concentration)), 
+                  1,function(x) paste(x,collapse = ":")) 
+Dall$Cond=factor(Dall$Condition)
+
+Dall$ID=apply(cbind(as.character(Dall$Row), 
+                        as.character(Dall$Column)), 
+                  1,function(x) paste(x,collapse = ":")) 
+Dall$ID=factor(Dall$ID)
+
 ``` 
+
 ## Number of Cells by Compound and Plate
 
 ```{r}
-kable(table(D$Compound,D$Plate,exclude = NULL) )
+kable(table(Dall$Compound,Dall$Plate,exclude = NULL) )
 
 ```
 
 NOTE: missing values are removed (why do they exist??)
 
 ```{r}
-D=D[!is.na(D$Compound),]
+Dall=Dall[!is.na(Dall$Compound),]
 ```
 
 
 
 # Descriptives
 
-## Groups by samples
+
+## Counts per Plates/coordinates
 
 ```{r}
-tab=table(D$Group,D$Plate)
+tbs=table(Row=Dall$Row,Column=Dall$Column,Plate=Dall$Plate)
+
+par(mfrow=c(2,2))
+for(i in 1:4){
+  cat("
+  __________Plate ",i,"__________
+      ") 
+  print(kable(tbs[,,i]))
+# #  print(kable(prop.table(tbs[,,i])))
+# heatmap(tbs[,,i],Rowv = NA,Colv = NA,main=paste0("Plate ",i))  
+}
+
+tbs2=as.data.frame.table(tbs)
+
+pp=lapply(1:4,function(i){
+  ggplot(data=tbs2[tbs2$Plate==i,], aes(Row, Column, fill= Freq)) + 
+  geom_tile()+ggtitle(paste0("Plate ",i))
+  })
+
+library(gridExtra) 
+  grid.arrange(pp[[1]],pp[[2]],pp[[3]],pp[[4]], nrow = 2) 
+  
+
+```
+
+
+
+
+## Groups by Plates
+
+```{r}
+tab=table(Dall$Group,Dall$Plate)
 kable(tab) 
 
 cat("NOTE: Category 0:None is omitted in the following")
-D=D[D$Group!="0:None",]
-D=D[!is.na(D$Group),]
+Dall=Dall[Dall$Group!="0:None",]
+Dall=Dall[!is.na(Dall$Group),]
 
-D$Group=factor(D$Group)
-tab=table(D$Group,D$Plate)
+Dall$Group=factor(Dall$Group)
+tab=table(Dall$Group,Dall$Plate)
 
 tab=prop.table(tab,margin = 2)
 kable(tab,digits = 3) 
 
 d_tab=as.data.frame.table(tab)
-names(d_tab)=c("Group","Sample","Prop")
+names(d_tab)=c("Group","Plate","Prop")
 
-g <- ggplot(d_tab, aes(y=Sample))
-g + geom_bar(aes(fill = Group,weight = Prop))+xlab("Proportion")
+g <- ggplot(d_tab, aes(y=Plate))
+g + geom_bar(aes(fill = Group,weight = Prop))+xlab("Proportion")+
+  scale_fill_manual(values=cbPalette)
 
 ```
-## Summary Features
+
+### Summary Features by Plates
 
 ```{r}
 
-out=rbind(Nuclei_length=summary(D$Nuclei_length) ,
-      Nuclei_intensity=summary(D$Nuclei_intensity) ,
-      Nuclei_Ratio_W_L=summary(D$Nuclei_Ratio_W_L) 
+out=rbind(Nuclei_length=summary(Dall$Nuclei_length) ,
+      Nuclei_intensity=summary(Dall$Nuclei_intensity) ,
+      Nuclei_Ratio_W_L=summary(Dall$Nuclei_Ratio_W_L) 
 )
-out=cbind(out,c(sd(D$Nuclei_length) ,
-              sd(D$Nuclei_intensity) ,
-      sd(D$Nuclei_Ratio_W_L) )
+out=cbind(out,c(sd(Dall$Nuclei_length) ,
+              sd(Dall$Nuclei_intensity) ,
+      sd(Dall$Nuclei_Ratio_W_L) )
 )
 
 kable(out)
 
-p <- ggplot(D, aes(group=Plate, y=Nuclei_length,fill=2)) + 
-  geom_boxplot()+ggtitle("Nuclei Length")
+p <- ggplot(Dall, aes(group=Plate, x=Plate,y=Nuclei_length,fill=2)) + 
+  geom_boxplot()+ggtitle("Nuclei Length")+ theme(legend.position = "none")
 p
 
-p <- ggplot(D, aes(group=Plate, y=Nuclei_intensity,fill=2)) + 
-  geom_boxplot()+ggtitle("Nuclei Intensity")
+p <- ggplot(Dall, aes(group=Plate, x=Plate,y=Nuclei_intensity,fill=2)) + 
+  geom_boxplot()+ggtitle("Nuclei Intensity") + theme(legend.position = "none")
 p
-p <- ggplot(D, aes(group=Plate, y=Nuclei_Ratio_W_L,fill=2)) + 
-  geom_boxplot()+ggtitle("Nuclei Ratio Width/Length")
+p <- ggplot(Dall, aes(group=Plate, x=Plate,y=Nuclei_Ratio_W_L,fill=2)) + 
+  geom_boxplot()+ggtitle("Nuclei Ratio Width/Length") + theme(legend.position = "none")
 p
 
 ```
 
 
- 
-```{r, eval=TRUE} 
-# D$Group0=D$Group3 
-# table(D[D$Compound=="Control","Group3"]) 
-#  
-# my_plot1(D[D$Compound=="Control",]) 
-#  
-D$Group0=D$Group 
+## Conditions by Groups
 
-table(D[D$Compound=="Control","Group"],exclude = NULL) 
-my_plot1(D[D$Compound=="Control",]) 
+```{r}
+
+tab=table(Dall$Cond,Dall$Group)
+kable(tab) 
+
+cat("NOTE: Category 0:None is omitted in the following")
+Dall=Dall[Dall$Group!="0:None",]
+Dall=Dall[!is.na(Dall$Group),]
+
+Dall$Group=factor(Dall$Group)
+tab=table(Dall$Group,Dall$Cond)
+
+tab=prop.table(tab,margin = 2)
+kable(tab,digits = 3) 
+
+d_tab=as.data.frame.table(tab)
+names(d_tab)=c("Group","Condition","Prop")
+
+g <- ggplot(d_tab, aes(y=Condition))
+g + geom_bar(aes(fill = Group,weight = Prop))+xlab("Proportion")+
+  scale_fill_manual(values=cbPalette)
+
+```
+
+## Explore variability of counts
+
+```{r}
+explore_control_group_plate_params(Dall,par_i = "Nuclei_intensity")
+explore_control_group_plate_params(Dall,par_i = "Nuclei_length")
+explore_control_group_plate_params(Dall,par_i = "Nuclei_Ratio_W_L")
+
+```
+
+```{r}
+load("datiD.Rdata")
+D$Condition=apply(cbind(as.character(D$Compound), 
+                        as.character(D$Concentration)), 
+                  1,function(x) paste(x,collapse = ":")) 
+D$Cond=factor(D$Condition)
+
+explore_control_group_plate(D)
+
+```
+
+
+
+## Scatter plot
+
+```{r, eval=TRUE} 
+
+
+Dall$Group0=Dall$Group 
+
+table(Dall[Dall$Compound=="Control","Group"],exclude = NULL) 
+my_plot1(Dall[Dall$Compound=="Control",]) 
  
-# D$Group0=(D$Group=="0:None") 
-# D$Group0=factor(D$Group0) 
-# levels(D$Group0)=c("Grp 1-6","NO Grp") 
+# Dall$Group0=(Dall$Group=="0:None") 
+# Dall$Group0=factor(Dall$Group0) 
+# levels(Dall$Group0)=c("Grp 1-6","NO Grp") 
 #  
-# my_plot1(D) 
-#my_plot2(D) 
+# my_plot1(Dall) 
+#my_plot2(Dall) 
  
 ``` 
  
