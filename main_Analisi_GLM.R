@@ -8,7 +8,10 @@
 
 PathScript <- '.' 
 PathAnalisi <- '.' 
-PathData <- 'G:\\My Drive\\lavorincorso\\brain_perm\\pfas_bos_taurus/data/' 
+PathData <- c('G:/My Drive/lavorincorso/brain_perm/pfas_tursiops_troncatus/data/Plate 1_19112021_ID457_Tm_P20_SingleData.csv',
+              'G:/My Drive/lavorincorso/brain_perm/pfas_tursiops_troncatus/data/Plate 2_19112021_ID457_Tm_P21_SingleData.csv',
+              'G:/My Drive/lavorincorso/brain_perm/pfas_tursiops_troncatus/data/Plate 3_19112021_ID457_Tm_P22_SingleData.csv',
+              'G:/My Drive/lavorincorso/brain_perm/pfas_tursiops_troncatus/data/Plate 4_19112021_ID457_Tm_P24_SingleData.csv')
 
 # gli estremi degli intervalli sempre separati di " - " (occhio agli spazi prima e dopo il -)
 # usare Inf e -Inf (senza spazio il - prima di Inf); 
@@ -33,6 +36,7 @@ InvokeR <- function()
   rmarkdown::render("preprocessing_data.Rmd", 
                     params = list(PathData=PathData,tab_txt=tab_txt),
                     output_file = paste0(PathScript,"/Output_1.html"))
+  
   rmarkdown::render("analysis_parametric.Rmd", 
                     output_file = paste0(PathScript,"/Output_2.html"))
   

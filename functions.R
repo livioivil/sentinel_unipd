@@ -109,8 +109,8 @@ theme_set(theme_sjplot())
 import_data_add_group <- function(filename,tab_txt){ 
   print(paste0("Importing file ",filename)) 
   
-  library(readxl) 
-  dati <- read_excel(filename) 
+  library(readr)
+  dati <- read_csv2(filename,show_col_types = FALSE) 
   print(("and preprocessing it.")) 
   
   # print(dim(dati)) 

@@ -60,7 +60,7 @@ D$Grp=D$Group
 D$Cond=relevel(D$Cond,"Control:0") 
 D$Cond=factor(D$Cond) 
  
-contrasts(D$Plate)<- contr.sum(4) 
+contrasts(D$Plate)<- contr.sum 
 # table(D$Cond,D$Group,D$Plate) 
  
 if(eval){ 
