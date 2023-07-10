@@ -6,11 +6,33 @@ my_plot_results <- function(mod){
   p=p+coord_flip()+scale_y_continuous(trans='log10') +scale_colour_manual(values=cbPalette)
   temp=get_model_data(mod, type = "eff", terms = c("Cond","Grp")) 
   temp=data.frame(temp) 
-  temp=temp[temp$x==1,"predicted"] 
-  p=p + geom_hline(yintercept=temp,col="gray") 
+  temp=temp[temp$x==1,c("predicted","group_col")] 
+  temp$group_col=factor(temp$group_col,levels = sort(as.character(temp$group_col)))
+  # rownames(temp)=temp[,"group_col"]
+  # temp=temp[,1,drop=FALSE]
+  p=p + geom_hline(data = temp,aes(yintercept=predicted,col=group_col))#+scale_colour_manual(values=cbPalette)#as.numeric(temp$group_col)) 
   p 
 } 
 
+
+my_plot_results_splitted <- function(mod){ 
+  lvs=levels(mod$model$Grp)
+  for(i in 1:length(lvs)) {  
+    p=plot_model(mod, type = "eff", terms = c("Cond",paste0("Grp [",lvs[i],"]")),colors="gs") 
+    p=p+coord_flip()+scale_y_continuous(trans='log10') +scale_colour_manual(values=cbPalette)
+    temp=get_model_data(mod, type = "eff", terms = c("Cond","Grp")) 
+    temp=data.frame(temp) 
+    temp=temp[temp$x==1,c("predicted","group_col")] 
+    colnames(temp)[2]="Group"
+    temp$Group=factor(temp$Group,levels = sort(as.character(temp$Group)))
+    # rownames(temp)=temp[,"group_col"]
+    # temp=temp[,1,drop=FALSE]
+    p=p + geom_hline(data = temp,aes(yintercept=predicted[i],col=Group[i]))#+scale_colour_manual(values=cbPalette)#as.numeric(temp$group_col)) 
+    print(p) 
+  }
+  } 
+
+###############################
 my_plot1 <- function(dati){ 
   library(ggplot2) 
   qs=list(Nuclei_length=quantile(dati$Nuclei_length,.99,na.rm=TRUE)*1.01,

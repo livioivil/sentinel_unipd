@@ -67,10 +67,11 @@ if(eval){
   ### FIXED EFFECT 
   mod= glm.nb(Counts~Plate+Cond*Grp,data=D) 
    
-   # mod=glmer.nb(Counts~Condition*Group3+(1|Column),data=D[D$Plate==1,]) 
   ngrps=nlevels(D$Grp) 
   nconds=23#*ngrps 
-  base=cbind(matrix(0,nconds,4),diag(nconds)) 
+  nplates=length(unique(D$Plate))
+  
+  base=cbind(matrix(0,nconds,nplates),diag(nconds)) 
   temp=rbind( 
     cbind(base,matrix(0,nconds,ngrps-1+nconds*5)), #gr=1 
     cbind(base,matrix(0,nconds,ngrps-1),diag(nconds),matrix(0,nconds,nconds*4)), #gr=2 
@@ -82,13 +83,13 @@ if(eval){
    
   contr_mat=temp 
   rownames(contr_mat)= 
-    names(coef(mod))[-c(1:4,28:32)] 
-  rownames(contr_mat)[1:23]=paste0(rownames(contr_mat)[1:23],":Grp1:G0")   
-   
+    names(coef(mod))[-c(1:nplates,(nconds+1:(ngrps-1))+nplates)] 
+  rownames(contr_mat)[1:nconds]=paste0(rownames(contr_mat)[1:nconds],":Grp1:G0")   
    
   modc=glht(mod,contr_mat) 
   modc_mcp=summary(modc) 
    
+  #############
   M=rbind( 
     c(1,1,1,rep(0,20)), 
     c(rep(0,3),rep(1,5),rep(0,15)), 
@@ -98,10 +99,10 @@ if(eval){
   ) 
  
    
-  riducente=  kronecker(diag(1, 6), M) 
-     
+  riducente=  kronecker(diag(1, ngrps), M) 
   contr_mat0=riducente%*%contr_mat 
   rownames(contr_mat0)=paste(sep="_",rep(levels(D$Compound)[-1],6),rep(levels(D$Group),each=5)) 
+  
   modc0=glht(mod,contr_mat0) 
   modc0_mcp=summary(modc0) 
    
@@ -126,4 +127,8 @@ modc_mcp
  
  
 p=my_plot_results(mod) 
-p#+ggtitle("All 4 plates")
+p
+
+my_plot_results_splitted(mod) 
+
+```
