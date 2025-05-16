@@ -63,7 +63,7 @@ run_glm_model <- function(dataset) {
   #liptak_stat=rowSums(res[,grep("z\\.value",colnames(res))])/sqrt(nplates)
   #liptak_ps=2*(pnorm(-abs(liptak_stat)))
   
-  p.adj=p.adjust(liptak_ps,"holm")
+  p.adj=p.adjust(fisher_ps,"holm")
   mean_coeff=rowMeans(res[,grep("Estimate",colnames(res))])
   
   
